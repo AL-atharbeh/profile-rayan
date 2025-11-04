@@ -1,0 +1,15 @@
+services:
+  nextjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: profile-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # قم بتعيين هذه المتغيرات البيئية هنا أو في ملف .env
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+    restart: unless-stopped
+
