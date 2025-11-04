@@ -1,119 +1,109 @@
-# 🚀 إعداد Supabase - خطوة بخطوة
+# إعداد Supabase
 
-## ✅ ما تم إنجازه:
+## الخطوات المطلوبة:
 
-1. ✅ تثبيت مكتبة Supabase
-2. ✅ إنشاء ملف `lib/supabase.ts` (الاتصال بقاعدة البيانات)
-3. ✅ إنشاء صفحة Admin (`app/admin/page.tsx`)
+### 1. إنشاء ملف `.env.local`
 
----
-
-## 📝 الخطوات المتبقية:
-
-### 1️⃣ **إنشاء ملف .env.local**
-
-أنشئ ملف `.env.local` في جذر المشروع وضع فيه:
+قم بإنشاء ملف جديد باسم `.env.local` في المجلد الرئيسي للمشروع وأضف التالي:
 
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://mjlsveljvauthnbcaxsq.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qbHN2ZWxqdmF1dGhuYmNheHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NDQ3ODQsImV4cCI6MjA3NzUyMDc4NH0.zvZ8P3WynpHJsLdKF3pt2Zj_QpR9Bg5UpmHc7dC9vJw
-
-# Admin Password (غيّره لكلمة سر قوية!)
-ADMIN_PASSWORD=admin123
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
----
+### 2. الحصول على بيانات Supabase
 
-### 2️⃣ **إنشاء الجدول في Supabase**
+1. اذهب إلى [Supabase Dashboard](https://app.supabase.com)
+2. قم بإنشاء مشروع جديد (أو استخدم مشروع موجود)
+3. بعد إنشاء المشروع، اذهب إلى **Settings** > **API**
+4. انسخ:
+   - **Project URL** → ضعه في `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon public** key → ضعه في `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-اذهب إلى [Supabase Dashboard](https://app.supabase.com) → مشروعك → **SQL Editor**
+### 3. مثال على الملف:
 
-الصق هذا الكود واضغط **Run**:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### 4. إعداد قاعدة البيانات
+
+بعد الحصول على بيانات Supabase، يجب إنشاء جدول `profile` في قاعدة البيانات:
+
+1. اذهب إلى **SQL Editor** في Supabase Dashboard
+2. قم بتشغيل هذا الاستعلام:
 
 ```sql
 -- إنشاء جدول profile
-CREATE TABLE profile (
+CREATE TABLE IF NOT EXISTS profile (
   id TEXT PRIMARY KEY DEFAULT '1',
   name TEXT NOT NULL,
   title TEXT NOT NULL,
-  avatar_url TEXT NOT NULL,
-  background_url TEXT NOT NULL,
-  stats JSONB NOT NULL,
-  links JSONB NOT NULL,
+  avatar_url TEXT,
+  background_url TEXT,
+  stats JSONB DEFAULT '{"followers": "0", "likes": "0", "posts": "0"}',
+  links JSONB DEFAULT '[]',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- إدراج بيانات افتراضية
+-- إضافة بيانات افتراضية
 INSERT INTO profile (id, name, title, avatar_url, background_url, stats, links)
 VALUES (
   '1',
-  'ELARA VANCE',
-  'Makeup Artist | Entrepreneur',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1080&q=80',
-  '{"followers": "127K", "likes": "2.4M", "posts": "850"}',
+  'ريان دشتي',
+  'ممثل قانوني || ناصر ظافر العجمي',
+  '/profile.jpeg',
+  '/back.jpeg',
+  '{"followers": "132K", "likes": "2.4M", "posts": "370"}',
   '[
     {"title": "MAKEUP STORE", "url": "https://yourstore.com", "icon": "instagram"},
-    {"title": "INSPIRATION", "url": "https://instagram.com/yourusername", "icon": "instagram"},
     {"title": "SNAPCHAT", "url": "https://snapchat.com/add/yourusername", "icon": "snapchat"},
     {"title": "WHATSAPP", "url": "https://wa.me/966500000000", "icon": "whatsapp"},
     {"title": "BEAUTY TIPS", "url": "https://tiktok.com/@yourusername", "icon": "tiktok"},
     {"title": "FACEBOOK", "url": "https://facebook.com/yourusername", "icon": "facebook"}
   ]'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
--- تفعيل Row Level Security (RLS)
+-- تفعيل Row Level Security (اختياري)
 ALTER TABLE profile ENABLE ROW LEVEL SECURITY;
 
 -- السماح بالقراءة للجميع
-CREATE POLICY "Enable read access for all users" ON profile
-FOR SELECT USING (true);
+CREATE POLICY "Allow public read access" ON profile
+  FOR SELECT USING (true);
 
--- السماح بالتحديث للجميع (في الإنتاج، غيّر هذا!)
-CREATE POLICY "Enable update for all users" ON profile
-FOR UPDATE USING (true);
-
--- السماح بالإدراج للجميع (في الإنتاج، غيّر هذا!)
-CREATE POLICY "Enable insert for all users" ON profile
-FOR INSERT WITH CHECK (true);
+-- السماح بالتحديث للجميع (يمكنك تقييد هذا لاحقاً)
+CREATE POLICY "Allow public update" ON profile
+  FOR UPDATE USING (true);
 ```
 
----
+### 5. إعداد Storage (اختياري - لرفع الصور)
 
-### 3️⃣ **إنشاء Storage Buckets**
+إذا كنت تريد رفع الصور:
 
-في Supabase Dashboard → **Storage** → **Create a new bucket**
+1. اذهب إلى **Storage** في Supabase Dashboard
+2. أنشئ bucket جديد باسم `avatars`
+3. فعّل **Public bucket** للسماح بالوصول العام
 
-أنشئ **2 buckets**:
+### 6. إعادة تشغيل Docker
 
-#### Bucket 1: `avatars`
-- Name: `avatars`
-- Public: ✅ Yes (اجعله public)
-- اضغط Create
-
-#### Bucket 2: `backgrounds`
-- Name: `backgrounds`
-- Public: ✅ Yes (اجعله public)
-- اضغط Create
-
----
-
-### 4️⃣ **اختبار الصفحة**
+بعد إنشاء ملف `.env.local`:
 
 ```bash
-npm run dev
+docker-compose down
+docker-compose up --build -d
 ```
 
-ثم افتح: **http://localhost:3000/admin**
+أو إذا كنت تريد تحديث المتغيرات البيئية فقط:
 
-**كلمة السر:** `admin123`
+```bash
+docker-compose restart
+```
 
----
+## ملاحظات مهمة:
 
-## 🎨 الآن عدّل الصفحة الرئيسية لتقرأ من Supabase!
-
-سأعدّل `app/page.tsx` الآن...
-
-
+- ملف `.env.local` موجود في `.gitignore` ولن يتم رفعه على GitHub
+- تأكد من عدم مشاركة بيانات Supabase الخاصة بك علناً
+- يمكنك استخدام `.env.example` كقالب (لكن لا تضيف بيانات حقيقية فيه)

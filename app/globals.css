@@ -16,10 +16,7 @@
   --font-nastaliq: 'Noto Nastaliq Urdu', serif;
 }
 
-/* Apply Arabic font to elements with Arabic text */
-body {
-  font-family: 'Noto Nastaliq Urdu', var(--font-geist-sans), sans-serif;
-}
+/* Arabic font will be applied only to specific elements */
 
 @media (prefers-color-scheme: dark) {
   :root {
